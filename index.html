@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Whoville Ledger</title>
+<meta name="description" content="A Who's ledger for keeping notes. Everything written down, everything kept.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='36' r='22' fill='%23b3242b'/%3E%3Crect x='27' y='8' width='10' height='8' rx='2' fill='%23c9a54a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Caveat:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<!-- Whos never throw anything away. Neither do I. -->
+<style>
+:root{
+  --night:#0f1a14;
+  --night-2:#16251c;
+  --paper:#f3e7cc;
+  --paper-2:#e9d9b4;
+  --paper-edge:#c9b083;
+  --ink:#2b1d12;
+  --ink-soft:#6b5640;
+  --rule:#b9c6d6;
+  --margin:#c2464b;
+  --red:#a8232a;
+  --red-deep:#7c1419;
+  --gold:#c9a54a;
+  --grinch:#5d9a2a;
+  --grinch-ink:#3f7a18;
+  --snow:rgba(255,255,255,.85);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse at 50% -10%, #23402c 0%, transparent 60%),
+    linear-gradient(var(--night), var(--night-2));
+  background-color:var(--night);
+  color:var(--ink);
+  font-family:"IM Fell English", Georgia, serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+#snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:28px 16px 64px}
+
+/* ---------- masthead ---------- */
+header.mast{text-align:center;color:var(--paper);margin-bottom:22px;position:relative}
+.mast .kicker{font-family:"IM Fell English SC",serif;letter-spacing:.32em;font-size:13px;color:var(--gold);opacity:.9}
+.mast h1{font-weight:400;font-size:clamp(38px,6vw,64px);margin:6px 0 4px;line-height:1;text-shadow:0 2px 0 #000,0 0 24px rgba(201,165,74,.25)}
+.mast h1 .who{position:relative;display:inline-block}
+.mast h1 .who::after{ /* the Grinch's strike-through */
+  content:"";position:absolute;left:-4%;right:-4%;top:52%;height:5px;
+  background:var(--grinch);border-radius:4px;transform:rotate(-3deg);opacity:.9;
+}
+.mast .scrawl{
+  font-family:"Caveat",cursive;color:var(--grinch);font-size:clamp(22px,3vw,30px);
+  position:absolute;transform:rotate(-8deg);white-space:nowrap;
+  left:50%;top:-6px;margin-left:-250px;
+}
+.mast .sub{font-style:italic;color:var(--paper-2);opacity:.8;font-size:17px;margin:8px auto 0;max-width:640px}
+@media (max-width:640px){ .mast .scrawl{position:static;display:block;margin:0 0 4px;transform:rotate(-4deg)} }
+
+/* ---------- the book ---------- */
+.book{
+  display:grid;grid-template-columns:300px 1fr;
+  background:var(--paper);
+  border-radius:6px;
+  box-shadow:0 0 0 1px var(--paper-edge),0 0 0 7px var(--red-deep),0 0 0 9px var(--gold),0 30px 60px rgba(0,0,0,.6);
+  min-height:620px;overflow:hidden;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.35), transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(120,80,30,.12), transparent 60%);
+}
+@media (max-width:820px){ .book{grid-template-columns:1fr} }
+
+/* index column */
+.index{border-right:2px solid var(--paper-edge);background:linear-gradient(90deg,rgba(0,0,0,.02),rgba(0,0,0,.06));display:flex;flex-direction:column;min-width:0}
+@media (max-width:820px){ .index{border-right:0;border-bottom:2px solid var(--paper-edge);max-height:340px} }
+.index-head{padding:16px 16px 10px;border-bottom:1px dashed var(--paper-edge)}
+.index-head h2{font-family:"IM Fell English SC",serif;font-weight:400;font-size:20px;margin:0 0 10px;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:baseline}
+.index-head h2 small{font-family:"Courier Prime",monospace;font-size:12px;color:var(--ink-soft);letter-spacing:0}
+.search{width:100%;font:15px "Courier Prime",monospace;padding:8px 10px;border:1px solid var(--paper-edge);background:rgba(255,255,255,.45);border-radius:3px;color:var(--ink)}
+.search:focus,.title-in:focus,.tag-in:focus,.body-in:focus{outline:2px solid var(--gold);outline-offset:1px}
+.btn{
+  font-family:"IM Fell English SC",serif;font-size:16px;letter-spacing:.05em;
+  border:1px solid var(--red-deep);background:var(--red);color:#fff6e6;
+  padding:7px 14px;border-radius:3px;cursor:pointer;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.btn:hover{background:var(--red-deep)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--paper-edge);box-shadow:none}
+.btn.ghost:hover{background:rgba(0,0,0,.05)}
+.btn.green{background:var(--grinch-ink);border-color:#2b5410}
+.btn.green:hover{background:#2b5410}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.new-row{display:flex;gap:8px;margin-top:10px}
+.new-row .btn{flex:1}
+
+.list{list-style:none;margin:0;padding:6px 0;overflow-y:auto;flex:1}
+.list li{
+  padding:10px 16px 10px 18px;cursor:pointer;border-left:4px solid transparent;
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+.list li:hover{background:rgba(255,255,255,.35)}
+.list li.on{background:rgba(255,255,255,.6);border-left-color:var(--red)}
+.list .t{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .m{font-family:"Courier Prime",monospace;font-size:11.5px;color:var(--ink-soft);margin-top:2px;display:flex;gap:8px;align-items:center}
+.chip{font-family:"IM Fell English SC",serif;font-size:11.5px;letter-spacing:.06em;padding:0 6px;border-radius:2px;color:#fff6e6;background:var(--ink-soft)}
+.chip.clue{background:var(--red)}
+.chip.cipher{background:#4a3a7a}
+.chip.place{background:#2f6170}
+.chip.theory{background:#8a6a1e}
+.chip.dead{background:#555}
+.empty-list{padding:18px;color:var(--ink-soft);font-style:italic}
+
+/* page column */
+.page{position:relative;display:flex;flex-direction:column;min-width:0}
+.page-head{padding:18px 26px 10px 64px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:2px solid var(--margin)}
+.title-in{flex:1 1 260px;min-width:0;font:30px "IM Fell English",serif;border:0;background:transparent;color:var(--ink);padding:2px 4px}
+.title-in::placeholder{color:#a8916f;font-style:italic}
+.tag-in{font:15px "IM Fell English SC",serif;padding:6px 8px;border:1px solid var(--paper-edge);background:rgba(255,255,255,.45);border-radius:3px;color:var(--ink)}
+.meta{padding:6px 26px 0 64px;font-family:"Courier Prime",monospace;font-size:12px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.lined{position:relative;flex:1;display:flex}
+.lined::before{ /* red margin rule */
+  content:"";position:absolute;left:48px;top:0;bottom:0;width:2px;background:var(--margin);opacity:.55
+}
+.body-in{
+  flex:1;min-height:440px;resize:none;border:0;
+  padding:8px 26px 30px 64px;
+  font:16px/28px "Courier Prime",monospace;color:var(--ink);
+  background:transparent;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--rule) 27px,var(--rule) 28px);
+  background-attachment:local;background-position:0 7px;
+}
+.body-in::placeholder{color:#a8916f}
+.page-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 26px 16px 64px;border-top:1px dashed var(--paper-edge);flex-wrap:wrap}
+.page-foot .left,.page-foot .right{display:flex;gap:8px;flex-wrap:wrap}
+.blank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;color:var(--ink-soft)}
+.blank p{font-style:italic;font-size:19px;max-width:420px}
+.ornament{width:70px;height:80px;margin-bottom:8px}
+.hide{display:none!important}
+
+/* footer */
+footer{color:var(--paper-2);opacity:.75;text-align:center;font-size:14.5px;margin-top:26px;line-height:1.6}
+footer .fine{font-family:"Courier Prime",monospace;font-size:12px;opacity:.85}
+footer a{color:var(--gold)}
+
+/* Grinch toast */
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translate(-50%,40px) rotate(-2deg);opacity:0;
+  background:#e6f2d4;color:var(--grinch-ink);border:2px solid var(--grinch);
+  font:700 24px "Caveat",cursive;padding:10px 20px;border-radius:4px;z-index:40;
+  transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;max-width:calc(100vw - 32px);text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.toast.show{opacity:1;transform:translate(-50%,0) rotate(-2deg)}
+
+/* the sack */
+.sack{
+  position:fixed;right:18px;bottom:18px;z-index:30;width:58px;height:62px;border:0;padding:0;background:none;cursor:pointer;
+  opacity:.35;transition:opacity .3s, transform .3s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));
+}
+.sack:hover,.sack:focus-visible{opacity:1;transform:rotate(-8deg) scale(1.08);outline:none}
+.sack.bump{animation:bump .7s}
+@keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(10deg)}60%{transform:scale(.95) rotate(-6deg)}100%{transform:scale(1)}}
+
+.veil{position:fixed;inset:0;background:rgba(5,12,8,.75);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.sack-panel{
+  background:#1d2e1a;color:#e9f3dc;border:3px solid var(--grinch);border-radius:8px;
+  width:min(680px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:24px 22px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+}
+.sack-panel h3{font:400 30px "IM Fell English SC",serif;margin:0;color:#cfe8b0;letter-spacing:.06em}
+.sack-panel .lede{font-family:"Caveat",cursive;font-size:24px;color:#9fd36b;margin:2px 0 16px}
+.dropped{
+  background:var(--paper);color:var(--ink);padding:18px 20px;border-radius:2px;transform:rotate(-1.2deg);
+  box-shadow:0 8px 20px rgba(0,0,0,.45);margin:4px 4px 22px;position:relative;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 25px,var(--rule) 25px,var(--rule) 26px);
+  font:16px/26px "Courier Prime",monospace;
+}
+.dropped::before{content:"";position:absolute;top:-10px;left:50%;width:90px;height:22px;margin-left:-45px;background:rgba(201,165,74,.55);transform:rotate(2deg)}
+.dropped em{font-family:"IM Fell English",serif;font-size:19px;color:var(--red-deep)}
+.dropped .sig{font-family:"Caveat",cursive;font-size:24px;color:var(--grinch-ink);text-align:right}
+.stolen{list-style:none;margin:0;padding:0}
+.stolen li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed rgba(159,211,107,.35)}
+.stolen .t{flex:1;min-width:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stolen .d{font:12px "Courier Prime",monospace;opacity:.7}
+.stolen .none{font-style:italic;opacity:.7}
+.x{position:absolute;right:12px;top:10px;background:none;border:0;color:#cfe8b0;font-size:28px;cursor:pointer;line-height:1}
+.sack-panel .btn.ghost{color:#e9f3dc;border-color:rgba(159,211,107,.5)}
+.sack-panel .btn.ghost:hover{background:rgba(159,211,107,.12)}
+
+.warn{background:#7c1419;color:#fff6e6;padding:10px 14px;border-radius:4px;margin:0 auto 16px;max-width:760px;font-size:15px;text-align:center}
+
+@media (prefers-reduced-motion:reduce){ #snow{display:none} .toast,.sack{transition:none} .sack.bump{animation:none} }
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="mast">
+    <span class="scrawl" aria-hidden="true">property of G. now</span>
+    <div class="kicker">Being a True &amp; Faithful Record of</div>
+    <h1>The <span class="who">Whoville</span> Ledger</h1>
+    <p class="sub">For every clue, cipher, coordinate &amp; crackpot theory. Write it all down, dear Who. You always do.</p>
+  </header>
+
+  <div id="storageWarn" class="warn hide">Your browser won't let this page keep anything (private window, or site data blocked). Notes will vanish when you close the tab. Use <b>Export</b> to save a copy.</div>
+
+  <main class="book">
+    <aside class="index" aria-label="Ledger index">
+      <div class="index-head">
+        <h2>Index <small id="count">0 entries</small></h2>
+        <input id="search" class="search" type="search" placeholder="Search the ledger..." aria-label="Search notes">
+        <div class="new-row">
+          <button id="newBtn" class="btn">+ New entry</button>
+        </div>
+      </div>
+      <ul id="list" class="list"></ul>
+    </aside>
+
+    <section class="page" aria-label="Entry">
+      <div id="blank" class="blank">
+        <svg class="ornament" viewBox="0 0 70 80" aria-hidden="true">
+          <rect x="29" y="2" width="12" height="9" rx="2" fill="#c9a54a"/>
+          <circle cx="35" cy="46" r="30" fill="#a8232a"/>
+          <path d="M8 40 Q35 52 62 40" stroke="#c9a54a" stroke-width="3" fill="none"/>
+          <circle cx="24" cy="34" r="5" fill="#fff" opacity=".35"/>
+        </svg>
+        <p>An empty page. How unlike a Who.<br>Start a new entry, or pick one from the index.</p>
+      </div>
+
+      <div id="editor" class="hide" style="display:flex;flex-direction:column;flex:1">
+        <div class="page-head">
+          <input id="title" class="title-in" placeholder="Untitled entry" aria-label="Entry title" maxlength="120">
+          <select id="tag" class="tag-in" aria-label="Kind of entry">
+            <option value="note">Note</option>
+            <option value="clue">Clue</option>
+            <option value="cipher">Cipher</option>
+            <option value="place">Place &amp; coords</option>
+            <option value="theory">Theory</option>
+            <option value="dead">Dead end</option>
+          </select>
+        </div>
+        <div class="meta"><span id="written">—</span><span id="saved">Kept.</span></div>
+        <div class="lined">
+          <textarea id="body" class="body-in" spellcheck="false" aria-label="Entry text"
+            placeholder="What did you find? Where? What does it say, letter for letter?&#10;&#10;Copy ciphertext exactly. Every dot and slash."></textarea>
+        </div>
+        <div class="page-foot">
+          <div class="left">
+            <button id="delBtn" class="btn ghost" title="Tear this page out">Tear out page</button>
+          </div>
+          <div class="right">
+            <button id="exportBtn" class="btn ghost" title="Download every entry as a file">Export</button>
+            <button id="importBtn" class="btn ghost" title="Load entries from an exported file">Import</button>
+            <input id="importFile" type="file" accept="application/json,.json" class="hide">
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Kept in this browser only. Nobody else can read it.<br>
+    <span class="fine">(Well. Almost nobody.)</span>
+  </footer>
+</div>
+
+<button id="sackBtn" class="sack hide" aria-label="A lumpy green sack">
+  <svg viewBox="0 0 58 62" width="58" height="62" aria-hidden="true">
+    <path d="M20 10 Q29 18 38 10 L36 18 Q54 30 52 46 Q50 60 29 60 Q8 60 6 46 Q4 30 22 18 Z" fill="#4f8a22" stroke="#2b5410" stroke-width="2"/>
+    <path d="M21 17 Q29 22 37 17" stroke="#c9a54a" stroke-width="3" fill="none"/>
+    <path d="M18 40 q4 6 10 2 M32 46 q6 -2 8 -8" stroke="#2b5410" stroke-width="1.6" fill="none" opacity=".7"/>
+    <text x="29" y="50" text-anchor="middle" font-family="Caveat,cursive" font-weight="700" font-size="15" fill="#e6f2d4">G</text>
+  </svg>
+</button>
+
+<div id="veil" class="veil hide" role="dialog" aria-modal="true" aria-labelledby="sackTitle">
+  <div class="sack-panel">
+    <button class="x" id="sackClose" aria-label="Close">&times;</button>
+    <h3 id="sackTitle">The Sack</h3>
+    <div class="lede">Hey! Hands OFF. That's mine.</div>
+
+    <div class="dropped">
+      You tore it out. You pressed the button. You watched it disappear,
+      and you thought, <i>well, that's that</i>.<br><br>
+      Whos. Honestly. You never throw <b>anything</b> away. What made you
+      think anything you threw away was ever gone?<br><br>
+      <em>Deleted is not gone. Look at what he took, not at what he left.</em>
+      <div class="sig">...I didn't write that. Put it down. — G.</div>
+    </div>
+
+    <ul id="stolen" class="stolen"></ul>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY_NOTES = "whoville-ledger:v1:notes";
+  var KEY_SACK  = "whoville-ledger:v1:sack";
+  var KEY_OPEN  = "whoville-ledger:v1:open";
+
+  /* ---------- storage, defensively ---------- */
+  var storeOK = true;
+  function load(k, dflt){
+    try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : dflt; }
+    catch(e){ storeOK = false; return dflt; }
+  }
+  function save(k, v){
+    try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+    catch(e){ storeOK = false; showWarn(); return false; }
+  }
+  try{ localStorage.setItem("whoville-ledger:probe","1"); localStorage.removeItem("whoville-ledger:probe"); }
+  catch(e){ storeOK = false; }
+
+  var notes = load(KEY_NOTES, []);
+  var sack  = load(KEY_SACK, []);
+  if(!Array.isArray(notes)) notes = [];
+  if(!Array.isArray(sack)) sack = [];
+  var openId = load(KEY_OPEN, null);
+
+  var $ = function(id){ return document.getElementById(id); };
+  var listEl=$("list"), searchEl=$("search"), titleEl=$("title"), tagEl=$("tag"), bodyEl=$("body"),
+      editor=$("editor"), blank=$("blank"), savedEl=$("saved"), writtenEl=$("written"), countEl=$("count"),
+      sackBtn=$("sackBtn"), veil=$("veil"), stolenEl=$("stolen"), toastEl=$("toast");
+
+  function showWarn(){ $("storageWarn").classList.remove("hide"); }
+  if(!storeOK) showWarn();
+
+  /* ---------- helpers ---------- */
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function when(t){
+    var d=new Date(t), h=d.getHours(), m=("0"+d.getMinutes()).slice(-2);
+    return d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear()+", "+h+":"+m;
+  }
+  function byId(id){ for(var i=0;i<notes.length;i++) if(notes[i].id===id) return notes[i]; return null; }
+  var TAGNAMES={note:"Note",clue:"Clue",cipher:"Cipher",place:"Place",theory:"Theory",dead:"Dead end"};
+
+  var toastTimer;
+  function toast(msg){
+    toastEl.textContent = msg; toastEl.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 3200);
+  }
+
+  /* ---------- render ---------- */
+  function renderList(){
+    var q = searchEl.value.trim().toLowerCase();
+    var sorted = notes.slice().sort(function(a,b){ return b.updated - a.updated; });
+    listEl.innerHTML = "";
+    var shown = 0;
+    sorted.forEach(function(n){
+      if(q && (n.title+" "+n.body+" "+TAGNAMES[n.tag]).toLowerCase().indexOf(q) === -1) return;
+      shown++;
+      var li = document.createElement("li");
+      if(n.id === openId) li.className = "on";
+      li.tabIndex = 0;
+      var t = document.createElement("div"); t.className="t"; t.textContent = n.title || "Untitled entry";
+      var m = document.createElement("div"); m.className="m";
+      var c = document.createElement("span"); c.className="chip "+n.tag; c.textContent = TAGNAMES[n.tag] || "Note";
+      var d = document.createElement("span"); d.textContent = when(n.updated);
+      m.appendChild(c); m.appendChild(d); li.appendChild(t); li.appendChild(m);
+      li.onclick = function(){ open(n.id); };
+      li.onkeydown = function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(n.id); } };
+      listEl.appendChild(li);
+    });
+    if(!shown){
+      var e = document.createElement("li"); e.className="empty-list";
+      e.textContent = q ? "Nothing in the ledger says that." : "No entries yet.";
+      e.style.cursor="default"; listEl.appendChild(e);
+    }
+    countEl.textContent = notes.length + (notes.length===1?" entry":" entries");
+    sackBtn.classList.toggle("hide", sack.length === 0);
+  }
+
+  function renderPage(){
+    var n = byId(openId);
+    if(!n){ editor.classList.add("hide"); blank.classList.remove("hide"); return; }
+    blank.classList.add("hide"); editor.classList.remove("hide");
+    titleEl.value = n.title; tagEl.value = n.tag; bodyEl.value = n.body;
+    writtenEl.textContent = "Begun " + when(n.created);
+    savedEl.textContent = storeOK ? "Kept." : "Not kept! (storage blocked)";
+  }
+
+  function open(id){ openId = id; save(KEY_OPEN, id); renderList(); renderPage(); }
+
+  /* ---------- editing ---------- */
+  var saveTimer;
+  function edited(){
+    var n = byId(openId); if(!n) return;
+    n.title = titleEl.value; n.tag = tagEl.value; n.body = bodyEl.value; n.updated = Date.now();
+    savedEl.textContent = "Writing...";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      savedEl.textContent = save(KEY_NOTES, notes) ? "Kept." : "Not kept! (storage blocked)";
+      renderList();
+    }, 400);
+  }
+  titleEl.addEventListener("input", edited);
+  bodyEl.addEventListener("input", edited);
+  tagEl.addEventListener("change", edited);
+  window.addEventListener("beforeunload", function(){ if(byId(openId)) save(KEY_NOTES, notes); });
+
+  $("newBtn").onclick = function(){
+    var t = Date.now();
+    var n = {id:uid(), title:"", tag:"note", body:"", created:t, updated:t};
+    notes.push(n); save(KEY_NOTES, notes); searchEl.value = "";
+    open(n.id); titleEl.focus();
+  };
+
+  searchEl.addEventListener("input", renderList);
+
+  /* ---------- tearing pages out (and where they really go) ---------- */
+  var TAUNTS = [
+    "Gone! Burned! Never to be seen again! — G.",
+    "Into the fire it goes. Definitely the fire. — G.",
+    "Poof. Vanished. Nowhere. Don't look for it. — G.",
+    "Ha! Lost forever, Who. FOREVER. — G."
+  ];
+  $("delBtn").onclick = function(){
+    var n = byId(openId); if(!n) return;
+    if(!confirm("Tear “"+(n.title||"Untitled entry")+"” out of the ledger?")) return;
+    notes = notes.filter(function(x){ return x.id !== n.id; });
+    n.taken = Date.now();
+    sack.unshift(n);
+    save(KEY_NOTES, notes); save(KEY_SACK, sack);
+    openId = null; save(KEY_OPEN, null);
+    renderList(); renderPage();
+    toast(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);
+    sackBtn.classList.remove("bump"); void sackBtn.offsetWidth; sackBtn.classList.add("bump");
+  };
+
+  function renderSack(){
+    stolenEl.innerHTML = "";
+    if(!sack.length){
+      var e = document.createElement("li"); e.innerHTML = '<span class="none">Empty. For now.</span>';
+      stolenEl.appendChild(e); return;
+    }
+    sack.forEach(function(n){
+      var li = document.createElement("li");
+      var info = document.createElement("div"); info.style.flex="1"; info.style.minWidth="0";
+      var t = document.createElement("div"); t.className="t"; t.textContent = n.title || "Untitled entry";
+      var d = document.createElement("div"); d.className="d"; d.textContent = "taken " + when(n.taken || n.updated);
+      info.appendChild(t); info.appendChild(d);
+      var back = document.createElement("button"); back.className="btn green"; back.textContent="Steal it back";
+      back.onclick = function(){
+        sack = sack.filter(function(x){ return x.id !== n.id; });
+        delete n.taken; n.updated = Date.now(); notes.push(n);
+        save(KEY_SACK, sack); save(KEY_NOTES, notes);
+        closeSack(); open(n.id); toast("HEY. That was MINE. — G.");
+      };
+      var burn = document.createElement("button"); burn.className="btn ghost"; burn.textContent="Burn";
+      burn.title = "Really, truly destroy it";
+      burn.onclick = function(){
+        if(!confirm("Burn it for real? This one actually can't come back.")) return;
+        sack = sack.filter(function(x){ return x.id !== n.id; });
+        save(KEY_SACK, sack); renderSack(); renderList();
+        if(!sack.length) closeSack();
+      };
+      li.appendChild(info); li.appendChild(back); li.appendChild(burn);
+      stolenEl.appendChild(li);
+    });
+  }
+  var lastFocus = null;
+  function openSack(){ lastFocus = document.activeElement; renderSack(); veil.classList.remove("hide"); $("sackClose").focus(); }
+  function closeSack(){ veil.classList.add("hide"); if(lastFocus && lastFocus.focus) lastFocus.focus(); }
+  sackBtn.onclick = openSack;
+  $("sackClose").onclick = closeSack;
+  veil.addEventListener("click", function(e){ if(e.target === veil) closeSack(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape" && !veil.classList.contains("hide")) closeSack(); });
+
+  /* ---------- export / import ---------- */
+  $("exportBtn").onclick = function(){
+    var blob = new Blob([JSON.stringify({ledger:"whoville", v:1, exported:Date.now(), notes:notes}, null, 2)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "whoville-ledger-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  };
+  $("importBtn").onclick = function(){ $("importFile").click(); };
+  $("importFile").onchange = function(){
+    var f = this.files && this.files[0]; if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try{
+        var data = JSON.parse(r.result);
+        var inc = Array.isArray(data) ? data : data.notes;
+        if(!Array.isArray(inc)) throw 0;
+        var added = 0;
+        inc.forEach(function(n){
+          if(!n || typeof n !== "object") return;
+          var clean = {
+            id: (typeof n.id==="string" && !byId(n.id)) ? n.id : uid(),
+            title: String(n.title||"").slice(0,120),
+            tag: TAGNAMES[n.tag] ? n.tag : "note",
+            body: String(n.body||""),
+            created: +n.created || Date.now(),
+            updated: +n.updated || Date.now()
+          };
+          notes.push(clean); added++;
+        });
+        save(KEY_NOTES, notes); renderList();
+        toast(added + (added===1?" entry":" entries") + " copied in.");
+      }catch(e){ toast("That's not a ledger file, Who."); }
+    };
+    r.readAsText(f);
+    this.value = "";
+  };
+
+  /* ---------- other tabs ---------- */
+  window.addEventListener("storage", function(e){
+    if(e.key === KEY_NOTES || e.key === KEY_SACK){
+      notes = load(KEY_NOTES, []); sack = load(KEY_SACK, []);
+      renderList(); if(document.activeElement !== bodyEl && document.activeElement !== titleEl) renderPage();
+    }
+  });
+
+  if(openId && !byId(openId)) openId = null;
+  renderList(); renderPage();
+
+  /* ---------- snow ---------- */
+  var cv = $("snow"), cx = cv.getContext && cv.getContext("2d");
+  if(cx && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)){
+    var flakes = [], W, H;
+    function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+    size(); addEventListener("resize", size);
+    for(var i=0;i<90;i++) flakes.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+.6, s:Math.random()*.6+.25, w:Math.random()*Math.PI*2});
+    (function tick(){
+      cx.clearRect(0,0,W,H); cx.fillStyle = "rgba(255,255,255,.75)";
+      flakes.forEach(function(f){
+        f.y += f.s; f.w += .01; f.x += Math.sin(f.w)*.3;
+        if(f.y > H+4){ f.y = -4; f.x = Math.random()*W; }
+        cx.beginPath(); cx.arc(f.x,f.y,f.r,0,6.283); cx.fill();
+      });
+      requestAnimationFrame(tick);
+    })();
+  }
+})();
+</script>
+</body>
+</html>
