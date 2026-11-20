@@ -192,9 +192,20 @@ footer a{color:var(--gold)}
 .sack-panel .btn.ghost{color:#e9f3dc;border-color:rgba(159,211,107,.5)}
 .sack-panel .btn.ghost:hover{background:rgba(159,211,107,.12)}
 
+/* margin notes */
+.ink{
+  position:absolute;bottom:76px;right:22px;z-index:5;max-width:min(330px,calc(100% - 72px));
+  font:700 25px/1.15 "Caveat",cursive;color:var(--grinch-ink);
+  background:rgba(243,231,204,.96);padding:6px 12px 8px;border-radius:3px;
+  box-shadow:0 6px 16px rgba(60,40,10,.25);transform:rotate(-3deg);
+  opacity:0;pointer-events:none;cursor:pointer;transition:opacity .5s;
+}
+.ink.on{opacity:1;pointer-events:auto;animation:scribble 1.5s steps(30) both}
+@media (max-width:820px){ .ink{position:fixed;left:16px;right:16px;bottom:16px;max-width:none;z-index:45} }
+@keyframes scribble{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .warn{background:#7c1419;color:#fff6e6;padding:10px 14px;border-radius:4px;margin:0 auto 16px;max-width:760px;font-size:15px;text-align:center}
 
-@media (prefers-reduced-motion:reduce){ #snow{display:none} .toast,.sack{transition:none} .sack.bump{animation:none} }
+@media (prefers-reduced-motion:reduce){ #snow{display:none} .toast,.sack,.ink{transition:none} .sack.bump,.ink.on{animation:none} }
 </style>
 </head>
 <body>
@@ -223,6 +234,7 @@ footer a{color:var(--gold)}
     </aside>
 
     <section class="page" aria-label="Entry">
+      <div id="ink" class="ink" role="status" aria-live="polite"></div>
       <div id="blank" class="blank">
         <svg class="ornament" viewBox="0 0 70 80" aria-hidden="true">
           <rect x="29" y="2" width="12" height="9" rx="2" fill="#c9a54a"/>
@@ -400,7 +412,7 @@ footer a{color:var(--gold)}
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
       savedEl.textContent = save(KEY_NOTES, notes) ? "Kept." : "Not kept! (storage blocked)";
-      renderList();
+      renderList(); settle();
     }, 400);
   }
   titleEl.addEventListener("input", edited);
@@ -507,7 +519,7 @@ footer a{color:var(--gold)}
           };
           notes.push(clean); added++;
         });
-        save(KEY_NOTES, notes); renderList();
+        save(KEY_NOTES, notes); renderList(); settle();
         toast(added + (added===1?" entry":" entries") + " copied in.");
       }catch(e){ toast("That's not a ledger file, Who."); }
     };
@@ -527,12 +539,120 @@ footer a{color:var(--gold)}
   renderList(); renderPage();
 
   /* ---------- snow ---------- */
+  var DRIFT = "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";
+  var DUST = "whoville-ledger:v1:", KEY_DRIFT = DUST + "drift";
+  var drift = (function(s){
+    try{ var b = atob(s), u = new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i] = b.charCodeAt(i); return u; }
+    catch(e){ return new Uint8Array(0); }
+  })(DRIFT);
+  function grain(i){ return drift.length ? drift[(i*7919) % drift.length]/255 : Math.random(); }
+
+  var Kf = [], Hf = [];
+  (function(){
+    for(var c=2, n=0; n<64; c++){
+      for(var d=2; d*d<=c && c%d; d++);
+      if(d*d > c){
+        if(n < 8) Hf[n] = (Math.pow(c, 1/2)*4294967296)|0;
+        Kf[n++] = (Math.pow(c, 1/3)*4294967296)|0;
+      }
+    }
+  })();
+  function flurry(m){
+    var H = Hf.slice(), l = m.length, n = ((l + 72) >> 6) << 6, p = new Uint8Array(n), w = [], t, o;
+    p.set(m); p[l] = 128;
+    var bits = l*8; p[n-4] = bits>>>24; p[n-3] = bits>>>16; p[n-2] = bits>>>8; p[n-1] = bits;
+    for(o=0; o<n; o+=64){
+      for(t=0; t<16; t++) w[t] = p[o+4*t]<<24 | p[o+4*t+1]<<16 | p[o+4*t+2]<<8 | p[o+4*t+3];
+      for(t=16; t<64; t++){
+        var x = w[t-15], y = w[t-2];
+        w[t] = (w[t-16] + ((x>>>7|x<<25)^(x>>>18|x<<14)^(x>>>3)) + w[t-7] + ((y>>>17|y<<15)^(y>>>19|y<<13)^(y>>>10)))|0;
+      }
+      var a=H[0], b=H[1], c=H[2], d=H[3], e=H[4], f=H[5], g=H[6], h=H[7];
+      for(t=0; t<64; t++){
+        var t1 = (h + ((e>>>6|e<<26)^(e>>>11|e<<21)^(e>>>25|e<<7)) + ((e&f)^(~e&g)) + Kf[t] + w[t])|0;
+        var t2 = (((a>>>2|a<<30)^(a>>>13|a<<19)^(a>>>22|a<<10)) + ((a&b)^(a&c)^(b&c)))|0;
+        h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+      }
+      H[0]=(H[0]+a)|0; H[1]=(H[1]+b)|0; H[2]=(H[2]+c)|0; H[3]=(H[3]+d)|0;
+      H[4]=(H[4]+e)|0; H[5]=(H[5]+f)|0; H[6]=(H[6]+g)|0; H[7]=(H[7]+h)|0;
+    }
+    var out = new Uint8Array(32);
+    for(t=0; t<8; t++){ out[4*t]=H[t]>>>24; out[4*t+1]=H[t]>>>16; out[4*t+2]=H[t]>>>8; out[4*t+3]=H[t]; }
+    return out;
+  }
+  function hx(u){ var s=""; for(var i=0;i<u.length;i++) s += (u[i]<16?"0":"") + u[i].toString(16); return s; }
+  function unhx(s){ var u = new Uint8Array(s.length/2); for(var i=0;i<u.length;i++) u[i] = parseInt(s.substr(2*i,2),16); return u; }
+  var enc = window.TextEncoder ? new TextEncoder() : null, dec = window.TextDecoder ? new TextDecoder() : null;
+
+  var drifts = {};
+  for(var di=0; di+6 <= drift.length; ){
+    var dl = drift[di+4]<<8 | drift[di+5];
+    drifts[hx(drift.subarray(di, di+4))] = drift.subarray(di+6, di+6+dl);
+    di += 6 + dl;
+  }
+  var landed = load(KEY_DRIFT, {}), sifted = {}, falling = [], inkEl = $("ink"), inkTimer;
+  if(!landed || typeof landed !== "object") landed = {};
+
+  function melt(key, c){
+    var out = new Uint8Array(c.length), blk = new Uint8Array(key.length + 4);
+    blk.set(key);
+    for(var i=0; i<c.length; i+=32){
+      var j = i/32; blk[key.length]=j>>>24; blk[key.length+1]=j>>>16; blk[key.length+2]=j>>>8; blk[key.length+3]=j;
+      var ks = flurry(blk);
+      for(var k=0; k<32 && i+k<c.length; k++) out[i+k] = c[i+k] ^ ks[k];
+    }
+    try{ return JSON.parse(dec.decode(out)); }catch(e){ return null; }
+  }
+  function frost(p){
+    if(p.c){ var st = document.createElement("style"); st.textContent = p.c; document.head.appendChild(st); }
+    (p.o || []).forEach(function(op){
+      var els = document.querySelectorAll(op.q);
+      for(var i=0;i<els.length;i++){
+        if(op.h != null) els[i].innerHTML = op.h;
+        if(op.a) for(var k in op.a) els[i].setAttribute(k, op.a[k]);
+      }
+    });
+  }
+  function fall(){
+    if(inkEl.classList.contains("on") || !falling.length) return;
+    var s = falling.shift();
+    inkEl.textContent = s; inkEl.classList.add("on");
+    clearTimeout(inkTimer); inkTimer = setTimeout(thaw, Math.max(7000, s.length*85));
+  }
+  function thaw(){ clearTimeout(inkTimer); inkEl.classList.remove("on"); setTimeout(fall, 700); }
+  inkEl.onclick = thaw;
+
+  function flakesOf(text){
+    var w = (text.normalize ? text.normalize("NFKD") : text).replace(/[̀-ͯ]/g, "")
+      .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), out = [];
+    for(var i=0;i<w.length;i++){ var g = w[i]; out.push(g); for(var j=1;j<4 && i+j<w.length;j++){ g += " " + w[i+j]; out.push(g); } }
+    return out;
+  }
+  function settle(){
+    if(!enc || !dec) return;
+    notes.concat(sack).forEach(function(n){
+      flakesOf((n.title||"") + " \n " + (n.body||"")).forEach(function(g){
+        if(sifted[g]) return; sifted[g] = 1;
+        var k = flurry(enc.encode(DUST + g)), t = hx(k.subarray(0,4));
+        if(!drifts[t] || landed[t]) return;
+        var p = melt(k.subarray(4), drifts[t]); if(!p) return;
+        landed[t] = hx(k.subarray(4)); save(KEY_DRIFT, landed);
+        frost(p); if(p.s) falling.push(p.s);
+      });
+    });
+    fall();
+  }
+  if(enc && dec) for(var lt in landed){
+    if(drifts[lt] && typeof landed[lt] === "string"){ var lp = melt(unhx(landed[lt]), drifts[lt]); if(lp) frost(lp); }
+  }
+  settle();
+
   var cv = $("snow"), cx = cv.getContext && cv.getContext("2d");
   if(cx && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)){
     var flakes = [], W, H;
     function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
     size(); addEventListener("resize", size);
-    for(var i=0;i<90;i++) flakes.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+.6, s:Math.random()*.6+.25, w:Math.random()*Math.PI*2});
+    for(var i=0;i<90;i++) flakes.push({x:grain(5*i)*W, y:grain(5*i+1)*H, r:grain(5*i+2)*2+.6, s:grain(5*i+3)*.6+.25, w:grain(5*i+4)*Math.PI*2});
     (function tick(){
       cx.clearRect(0,0,W,H); cx.fillStyle = "rgba(255,255,255,.75)";
       flakes.forEach(function(f){
