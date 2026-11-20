@@ -57,7 +57,7 @@ header.mast{text-align:center;color:var(--paper);margin-bottom:22px;position:rel
 .mast .scrawl{
   font-family:"Caveat",cursive;color:var(--grinch);font-size:clamp(22px,3vw,30px);
   position:absolute;transform:rotate(-8deg);white-space:nowrap;
-  left:50%;top:-6px;margin-left:-250px;
+  left:50%;top:-26px;margin-left:-275px;
 }
 .mast .sub{font-style:italic;color:var(--paper-2);opacity:.8;font-size:17px;margin:8px auto 0;max-width:640px}
 @media (max-width:640px){ .mast .scrawl{position:static;display:block;margin:0 0 4px;transform:rotate(-4deg)} }
@@ -139,6 +139,7 @@ header.mast{text-align:center;color:var(--paper);margin-bottom:22px;position:rel
 .page-foot .left,.page-foot .right{display:flex;gap:8px;flex-wrap:wrap}
 .blank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;color:var(--ink-soft)}
 .blank p{font-style:italic;font-size:19px;max-width:420px}
+.blank .g{font:700 24px/1.2 "Caveat",cursive;font-style:normal;color:var(--grinch-ink);transform:rotate(-3deg);margin-top:6px}
 .ornament{width:70px;height:80px;margin-bottom:8px}
 .hide{display:none!important}
 
@@ -243,6 +244,7 @@ footer a{color:var(--gold)}
           <circle cx="24" cy="34" r="5" fill="#fff" opacity=".35"/>
         </svg>
         <p>An empty page. How unlike a Who.<br>Start a new entry, or pick one from the index.</p>
+        <p class="g">Go on. Write it all down. I'll be reading. — G.</p>
       </div>
 
       <div id="editor" class="hide" style="display:flex;flex-direction:column;flex:1">
@@ -409,6 +411,7 @@ footer a{color:var(--gold)}
     var n = byId(openId); if(!n) return;
     n.title = titleEl.value; n.tag = tagEl.value; n.body = bodyEl.value; n.updated = Date.now();
     savedEl.textContent = "Writing...";
+    brush();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
       savedEl.textContent = save(KEY_NOTES, notes) ? "Kept." : "Not kept! (storage blocked)";
@@ -590,7 +593,7 @@ footer a{color:var(--gold)}
     drifts[hx(drift.subarray(di, di+4))] = drift.subarray(di+6, di+6+dl);
     di += 6 + dl;
   }
-  var landed = load(KEY_DRIFT, {}), sifted = {}, falling = [], inkEl = $("ink"), inkTimer;
+  var landed = load(KEY_DRIFT, {}), sifted = {}, falling = [], inkEl = $("ink"), inkTimer, inkAt = 0;
   if(!landed || typeof landed !== "object") landed = {};
 
   function melt(key, c){
@@ -616,10 +619,11 @@ footer a{color:var(--gold)}
   function fall(){
     if(inkEl.classList.contains("on") || !falling.length) return;
     var s = falling.shift();
-    inkEl.textContent = s; inkEl.classList.add("on");
+    inkEl.textContent = s; inkEl.classList.add("on"); inkAt = Date.now();
     clearTimeout(inkTimer); inkTimer = setTimeout(thaw, Math.max(7000, s.length*85));
   }
   function thaw(){ clearTimeout(inkTimer); inkEl.classList.remove("on"); setTimeout(fall, 700); }
+  function brush(){ if(inkEl && inkEl.classList.contains("on") && Date.now() - inkAt > 3500) thaw(); }
   inkEl.onclick = thaw;
 
   function flakesOf(text){
